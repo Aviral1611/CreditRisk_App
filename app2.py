@@ -84,3 +84,18 @@ user_data = {
 if st.button("Predict"):
     result = predict(user_data)
     st.success(f"Prediction: {result}")
+
+
+
+
+st.markdown("---")
+st.markdown(
+    """
+    <p style="text-align: center;">Developed by <strong>Aviral Bansal</strong></p>
+    <p style="text-align: center;">
+        <a href="https://github.com/Aviral1611" target="_blank">
+            <img src="https://img.icons8.com/ios-glyphs/30/000000/github.png"/>
+        </a>
+    </p>
+    """, unsafe_allow_html=True
+)
