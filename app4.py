@@ -4,13 +4,11 @@ import joblib
 import numpy as np
 
 # Load the trained model
-model = joblib.load('xgboost_model.pkl')
-
-scaler = joblib.load('scaler.pkl')
-
+dt_model = joblib.load('decision_tree_model.pkl')
+scaler = joblib.load('scaler.pkl') 
 
 # Function to make predictions
-def predict(data):
+def predict_dt(data):
     input_df = pd.DataFrame([data])
 
     st.write(input_df)
@@ -20,31 +18,24 @@ def predict(data):
     input_df = pd.concat([input_df.drop(columns=["occupation_type"]), occupation_encoded], axis=1)
 
     # Align columns
-    missing_cols = [col for col in model.feature_names_in_ if col not in input_df.columns]
+    missing_cols = [col for col in dt_model.feature_names_in_ if col not in input_df.columns]
     for col in missing_cols:
         input_df[col] = 0
-    input_df = input_df[model.feature_names_in_]
+    input_df = input_df[dt_model.feature_names_in_]
 
     input_df.columns = input_df.columns.astype(str)
 
     # Apply scaling if necessary
     input_df = scaler.transform(input_df)
 
-    # Get prediction probability
-    probability = model.predict_proba(input_df)[0][1]
-    threshold = 0.5  # Adjust threshold if needed
-    prediction = 1 if probability >= threshold else 0
-    st.write(f"Predicted probability: {probability}")
+    # Predict using the Decision Tree model
+    prediction = dt_model.predict(input_df)[0]
     st.write(f"Predicted class: {prediction}")
 
     return "Not Eligible for Loan" if prediction == 1 else "Eligible for Loan"
 
-
-
-
-
 # Streamlit App UI
-st.title("Loan Eligibility Prediction")
+st.title("Loan Eligibility Prediction (Decision Tree Classifier)")
 
 # Collect user input
 age = st.number_input("Age", min_value=18, max_value=100, value=30)
@@ -89,9 +80,8 @@ user_data = {
 
 # Display prediction
 if st.button("Predict"):
-    result = predict(user_data)
+    result = predict_dt(user_data)
     st.success(f"Prediction: {result}")
-
 
 st.markdown("---")
 st.markdown(
@@ -104,5 +94,3 @@ st.markdown(
     </p>
     """, unsafe_allow_html=True
 )
-
-
