@@ -3,73 +3,42 @@ import pandas as pd
 import joblib
 import numpy as np
 
-# Load models and scaler
-logreg_model = joblib.load('logistic_regression_model.pkl')
+# Load the trained Random Forest model and scaler
 rf_model = joblib.load('random_forest_model.pkl')
-catboost_model = joblib.load('catboost_model.pkl')
-meta_model = joblib.load('meta_model.pkl')
-scaler = joblib.load('scaler.pkl')  # For input scaling
-catboost_feature_names = joblib.load('catboost_feature_names.pkl')
+scaler = joblib.load('scaler.pkl')  # Assumes scaling is needed
 
-# Dictionary of base models
-base_models = {
-    "logistic_regression": logreg_model,
-    "random_forest": rf_model,
-    "catboost": catboost_model
-}
-
-def align_features_for_catboost(input_df, catboost_feature_names):
-    # Add missing columns with default values
-    for col in catboost_feature_names:
-        if col not in input_df.columns:
-            input_df[col] = 0
-    # Ensure the same order as feature names
-    input_df = input_df[catboost_feature_names]
-    return input_df
-
-# Function to predict using base models and meta-model
-def predict_meta_model(data):
-    # Convert input data to DataFrame
+# Function to make predictions
+def predict_random_forest(data):
     input_df = pd.DataFrame([data])
+
+    st.write(input_df)  # Display raw input for debugging
 
     # One-hot encode `occupation_type`
     occupation_encoded = pd.get_dummies(input_df["occupation_type"], prefix="occupation")
     input_df = pd.concat([input_df.drop(columns=["occupation_type"]), occupation_encoded], axis=1)
 
-    # Align columns with base models
-    for model_name, model in base_models.items():
-        missing_cols = [col for col in model.feature_names_in_ if col not in input_df.columns]
-        for col in missing_cols:
-            input_df[col] = 0
-        input_df = input_df[model.feature_names_in_]
+    # Align columns with trained model
+    missing_cols = [col for col in rf_model.feature_names_in_ if col not in input_df.columns]
+    for col in missing_cols:
+        input_df[col] = 0
+    input_df = input_df[rf_model.feature_names_in_]
 
-    # Scale input
-    input_scaled = scaler.transform(input_df)
+    input_df.columns = input_df.columns.astype(str)
 
-    # Generate predictions from base models
-    base_predictions = {}
-    for model_name, model in base_models.items():
-        base_predictions[model_name] = model.predict_proba(input_scaled)[:, 1]  # Get probability of class 1
+    # Apply scaling
+    input_df = scaler.transform(input_df)
 
-    # Create stacked input for meta-model
-    stacked_input = np.column_stack([base_predictions[name] for name in meta_model.feature_names_in_])
-
-    # Debugging: Display intermediate steps
-    st.write("Base Predictions:", base_predictions)
-    st.write("Stacked Input for Meta-Model:", stacked_input)
-
-    # Predict using meta-model
-    probability = meta_model.predict_proba(stacked_input)[0][1]
+    # Get prediction probability
+    probability = rf_model.predict_proba(input_df)[0][1]
     threshold = 0.5  # Adjust threshold if needed
     prediction = 1 if probability >= threshold else 0
-
-    st.write(f"Meta-Model Predicted Probability: {probability}")
-    st.write(f"Meta-Model Predicted Class: {prediction}")
+    st.write(f"Predicted probability: {probability}")
+    st.write(f"Predicted class: {prediction}")
 
     return "Not Eligible for Loan" if prediction == 1 else "Eligible for Loan"
 
 # Streamlit App UI
-st.title("Loan Eligibility Prediction (Meta-Model)")
+st.title("Loan Eligibility Prediction (Random Forest Model)")
 
 # Collect user input
 age = st.number_input("Age", min_value=18, max_value=100, value=30)
@@ -87,8 +56,8 @@ occupation_type = st.selectbox("Occupation Type", [
 ])
 total_family_members = st.number_input("Total Family Members", min_value=1, max_value=20, value=2)
 migrant_worker = st.selectbox("Migrant Worker", ["Yes", "No"])
-yearly_debt_payments = st.number_input("Yearly Debt Payments", min_value=0.0, value=10000.0)
-credit_limit = st.number_input("Credit Limit", min_value=0.0, value=50000.0)
+yearly_debt_payments = st.number_input("Yearly Debt Payments", min_value=0.0, value=10000.0, max_value=500000.0)
+credit_limit = st.number_input("Credit Limit", min_value=0.0, value=5000.0, max_value = 100000.0)
 credit_score = st.number_input("Credit Score", min_value=300.0, max_value=850.0, value=650.0)
 prev_defaults = st.number_input("Previous Defaults", min_value=0, max_value=10, value=0)
 default_in_last_6months = st.selectbox("Default in Last 6 Months?", ["Yes", "No"])
@@ -114,7 +83,7 @@ user_data = {
 
 # Display prediction
 if st.button("Predict"):
-    result = predict_meta_model(user_data)
+    result = predict_random_forest(user_data)
     st.success(f"Prediction: {result}")
 
 st.markdown("---")

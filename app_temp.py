@@ -82,7 +82,7 @@ with st.form("loan_form"):
     migrant_worker = st.selectbox("Migrant Worker", ["Yes", "No"])
     yearly_debt_payments = st.number_input("Yearly Debt Payments", min_value=0.0, value=10000.0)
     credit_limit = st.number_input("Credit Limit", min_value=0.0, value=50000.0)
-    credit_score = st.number_input("Credit Score", min_value=0.0, max_value=850.0, value=0.0)
+    credit_score = st.number_input("Credit Score", min_value=300.0, max_value=850.0, value=650.0)
     prev_defaults = st.number_input("Previous Defaults", min_value=0, max_value=10, value=0)
     default_in_last_6months = st.selectbox("Default in Last 6 Months?", ["Yes", "No"])
     
