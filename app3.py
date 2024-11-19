@@ -98,7 +98,7 @@ with st.form("loan_form"):
                 "migrant_worker": 1 if migrant_worker == "Yes" else 0,
                 "yearly_debt_payments": yearly_debt_payments,
                 "credit_limit": credit_limit,
-                "credit_limit_used_percent": credit_limit_used_percent,
+                "credit_limit_used(%)": credit_limit_used_percent,
                 "credit_score": credit_score,
                 "prev_defaults": prev_defaults,
                 "default_in_last_6months": 1 if default_in_last_6months == "Yes" else 0,
