@@ -37,30 +37,6 @@ def predict_logreg(data):
     prediction = "Not Eligible for Loan" if probability >= threshold else "Eligible for Loan"
     return prediction, probability, input_df_scaled
 
-# SHAP Explanation
-def explain_prediction(input_df_scaled):
-    if np.isnan(input_df_scaled).any() or np.isinf(input_df_scaled).any():
-        st.error("Input data contains invalid values (NaN or inf). Please check the input data.")
-        return
-
-    explainer = shap.Explainer(logreg_model, input_df_scaled)
-    shap_values = explainer(input_df_scaled)
-
-    st.subheader("Feature Contribution to Prediction (Waterfall Plot)")
-    try:
-        plt.figure(figsize=(10, 5))
-        shap.waterfall_plot(shap_values[0])
-        st.pyplot(plt)
-    except Exception as e:
-        st.error(f"Error in SHAP Waterfall Plot: {str(e)}")
-
-    st.subheader("Feature Importance (Summary)")
-    try:
-        plt.figure(figsize=(10, 5))
-        shap.summary_plot(shap_values, input_df_scaled, plot_type="bar", show=False)
-        st.pyplot(plt)
-    except Exception as e:
-        st.error(f"Error in SHAP Summary Plot: {str(e)}")
 
 # Streamlit App UI
 st.title("Loan Eligibility Prediction (Logistic Regression)")
@@ -112,9 +88,6 @@ with st.form("loan_form"):
         prediction, probability, input_df = predict_logreg(user_data)
         st.success(f"Prediction: {prediction}")
         st.info(f"Probability of Default: {probability:.2f}")
-
-        # SHAP Explanation
-        explain_prediction(input_df)
 
 st.markdown("---")
 st.markdown(
